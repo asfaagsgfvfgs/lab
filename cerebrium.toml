@@ -1,22 +1,20 @@
 [cerebrium.deployment]
 name = "jupyterlab"
+python_version = "3.12"
 disable_auth = true
-include = ["*"]
+include = ["./*", "main.py", "cerebrium.toml"]
 exclude = [".*"]
 
 [cerebrium.runtime.custom]
-port = 8192
-healthcheck_endpoint = ""     # empty string => TCP check
-readycheck_endpoint  = ""     # empty string => TCP check
-dockerfile_path = "./Dockerfile"
+# This is optional if your project already runs with the default entrypoint behavior,
+# but it's the most explicit/least confusing setup.
+port = 8000
+entrypoint = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+healthcheck_endpoint = "/health"
 
-[cerebrium.hardware]
-cpu = 2
-memory = 4.0
-compute = "CPU"
-
-[cerebrium.scaling]
-min_replicas = 1
-max_replicas = 1
-replica_concurrency = 1
-cooldown = 60
+[cerebrium.dependencies.pip]
+fastapi = "latest"
+uvicorn = "latest"
+httpx = "latest"
+websockets = "latest"
+jupyterlab = "latest"
