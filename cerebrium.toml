@@ -1,16 +1,15 @@
 [cerebrium.deployment]
-name = "jupyterlab"
+name = "min"                       # or whatever your app is called
 python_version = "3.12"
 disable_auth = true
 include = ["./*", "main.py", "cerebrium.toml"]
 exclude = [".*"]
 
 [cerebrium.runtime.custom]
-# This is optional if your project already runs with the default entrypoint behavior,
-# but it's the most explicit/least confusing setup.
-port = 8000
-entrypoint = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+entrypoint = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+port = 8080
 healthcheck_endpoint = "/health"
+readycheck_endpoint = "/health"
 
 [cerebrium.dependencies.pip]
 fastapi = "latest"
