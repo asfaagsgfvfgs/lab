@@ -1,19 +1,22 @@
 [cerebrium.deployment]
-name = "min"                       # or whatever your app is called
-python_version = "3.12"
+name = "min"                # <-- your app name (appears in the URL)
 disable_auth = true
-include = ["./*", "main.py", "cerebrium.toml"]
+include = ["./*"]
 exclude = [".*"]
 
 [cerebrium.runtime.custom]
-entrypoint = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
-port = 8080
+port = 8192
+dockerfile_path = "./Dockerfile"
 healthcheck_endpoint = "/health"
 readycheck_endpoint = "/health"
 
-[cerebrium.dependencies.pip]
-fastapi = "latest"
-uvicorn = "latest"
-httpx = "latest"
-websockets = "latest"
-jupyterlab = "latest"
+[cerebrium.hardware]
+cpu = 2
+memory = 4.0
+compute = "CPU"
+
+[cerebrium.scaling]
+min_replicas = 1
+max_replicas = 1
+replica_concurrency = 1
+cooldown = 3600
