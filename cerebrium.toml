@@ -1,9 +1,22 @@
 [cerebrium.deployment]
 name = "jupyterlab"
 disable_auth = true
+include = ["./*"]
+exclude = [".*"]
 
 [cerebrium.runtime.custom]
 port = 8192
-healthcheck_endpoint = ""  # empty string = TCP check <!--citation:4-->
-readycheck_endpoint  = ""  # empty string = TCP check <!--citation:4-->
 dockerfile_path = "./Dockerfile"
+healthcheck_endpoint = ""  # empty = TCP healthcheck
+readycheck_endpoint  = ""  # empty = TCP readycheck
+
+[cerebrium.hardware]
+cpu = 2
+memory = 4.0
+compute = "CPU"
+
+[cerebrium.scaling]
+min_replicas = 1
+max_replicas = 1
+replica_concurrency = 1
+cooldown = 60
