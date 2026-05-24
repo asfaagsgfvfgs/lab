@@ -1,0 +1,9 @@
+[cerebrium.deployment]
+name = "jupyterlab"
+disable_auth = true
+
+[cerebrium.runtime.custom]
+port = 8192
+healthcheck_endpoint = ""  # empty string = TCP check <!--citation:4-->
+readycheck_endpoint  = ""  # empty string = TCP check <!--citation:4-->
+dockerfile_path = "./Dockerfile"
