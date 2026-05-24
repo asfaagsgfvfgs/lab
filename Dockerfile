@@ -1,40 +1,41 @@
-FROM python:3.11-slim
+# Cerebrium custom Dockerfiles need: WORKDIR, EXPOSE, and a CMD that starts your server. <!--citation:1-->
+FROM python:3.12-bookworm
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    JUPYTER_ENABLE_LAB=yes
+# dumb-init helps with signal handling (SIGTERM) so the process shuts down cleanly.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends dumb-init ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && update-ca-certificates
 
-RUN apt-get update \ 
-    && apt-get install -y --no-install-recommends build-essential curl git tini \ 
-    && apt-get clean \ 
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-ARG NB_USER=jovyan
-ARG NB_UID=1000
-ARG NB_GID=100
-ENV USER=${NB_USER} \
-    HOME=/home/${NB_USER}
+# (Optional) if you have a requirements.txt, keep this layer for caching
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-RUN groupadd --gid ${NB_GID} ${NB_USER} \ 
-    && useradd --no-log-init --create-home --uid ${NB_UID} --gid ${NB_GID} --shell /bin/bash ${NB_USER}
+# Install JupyterLab (add extra libs you want here, e.g. pandas, numpy, etc.)
+RUN pip install --no-cache-dir jupyterlab ipykernel
 
-WORKDIR ${HOME}
+# If you want your repo files in the image (optional)
+COPY . /app
 
-RUN pip install --no-cache-dir \ 
-    jupyterlab \ 
-    jupyterlab-git \ 
-    jupyterlab-code-formatter \ 
-    black isort
+# Cerebrium will route traffic to the port you set in cerebrium.toml; expose the same port here. <!--citation:1-->
+EXPOSE 8192
 
-RUN mkdir -p /workspace \ 
-    && chown -R ${NB_UID}:${NB_GID} /workspace ${HOME}
-
-EXPOSE 8888
-
-USER ${NB_USER}
-
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--ServerApp.token=", "--ServerApp.password=", "--ServerApp.allow_origin=*", "--ServerApp.root_dir=/workspace"]
-      
+# Notes:
+# - We store notebooks in /persistent-storage so they persist across deployments. <!--citation:2-->
+# - For browser access, you’ll typically set `disable_auth=true` in cerebrium.toml (Cerebrium auth is token-based by default). <!--citation:3-->
+# - Set JUPYTER_TOKEN as a Cerebrium Secret if you want a stable login token (recommended).
+CMD ["dumb-init", "--", "sh", "-lc", "\
+  mkdir -p /persistent-storage/notebooks; \
+  EXTRA_ARGS=''; \
+  if [ -n \"${JUPYTER_TOKEN:-}\" ]; then EXTRA_ARGS=\"$EXTRA_ARGS --ServerApp.token=${JUPYTER_TOKEN}\"; fi; \
+  jupyter lab \
+    --ServerApp.ip=0.0.0.0 \
+    --ServerApp.port=8192 \
+    --ServerApp.root_dir=/persistent-storage/notebooks \
+    --ServerApp.allow_remote_access=True \
+    --ServerApp.trust_xheaders=True \
+    --no-browser \
+    $EXTRA_ARGS \
+"]
