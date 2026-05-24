@@ -9,11 +9,10 @@ WORKDIR /workspace
 RUN pip install --no-cache-dir --upgrade pip \
  && pip install --no-cache-dir jupyterlab
 
-# Cerebrium requires EXPOSE + (WORKDIR) + something that starts the server (CMD)
 EXPOSE 8192
 
-ENV JUPYTER_PORT=8192
 ENV NOTEBOOK_DIR=/persistent-storage/notebooks
+ENV JUPYTER_PORT=8192
 
 CMD ["dumb-init", "--", "sh", "-lc", "\
   mkdir -p \"$NOTEBOOK_DIR\"; \
@@ -21,7 +20,7 @@ CMD ["dumb-init", "--", "sh", "-lc", "\
   if [ -n \"${PROJECT_ID:-}\" ] && [ -n \"${APP_NAME:-}\" ]; then \
     BASE_URL=\"/v4/${PROJECT_ID}/${APP_NAME}/\"; \
   fi; \
-  echo \"Starting JupyterLab on port ${JUPYTER_PORT} with base_url=${BASE_URL}\"; \
+  echo \"Starting JupyterLab on :${JUPYTER_PORT} with base_url=${BASE_URL}\"; \
   jupyter lab \
     --ServerApp.ip=0.0.0.0 \
     --ServerApp.port=${JUPYTER_PORT} \
